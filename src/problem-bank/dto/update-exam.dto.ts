@@ -15,11 +15,6 @@ export class UpdateExamDto extends PartialType(CreateExamDto) {
     examiner?: UsersModel;
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => UsersModel)
-    examinee?: UsersModel;
-
-    @IsOptional()
     @IsDateString()
     createdAt?: Date;
 

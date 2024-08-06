@@ -29,7 +29,7 @@ export class SignUpUserDto {
     @IsOptional()
     @ApiProperty({
         description: '사용자의 역할 (선택 사항)',
-        example: 'Admin',
+        example: 'admin',
         required: false,
     })
     role?: UserType;

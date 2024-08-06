@@ -11,13 +11,9 @@ export class Exam {
     @Column()
     name: string;
 
-    @ManyToOne(() => UsersModel)
+    @ManyToOne(() => UsersModel, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'examiner_id' })
     examiner: UsersModel;
-
-    @ManyToOne(() => UsersModel)
-    @JoinColumn({ name: 'examinee_id' })
-    examinee: UsersModel;
 
     @OneToMany(() => Problem, problem => problem.exam)
     problems: Problem[];

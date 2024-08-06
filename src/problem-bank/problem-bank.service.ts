@@ -30,6 +30,15 @@ export class ProblemBankService {
   ) { }
 
 
+  async removeProblemsForExam(id: number) {
+    const exam = await this.examRepository.findOne({ where: { id } });
+    if (!exam) {
+      throw new NotFoundException(`Exam with ID ${id} not found`);
+    }
+
+    await this.problemRepository.delete({ exam });
+  }
+
   async removeExam(id: number) {
     const exam = await this.examRepository.findOne({ where: { id } });
     if (!exam) {
@@ -38,41 +47,6 @@ export class ProblemBankService {
 
     await this.examRepository.remove(exam);
   }
-
-  // async createMultiProblem(examId: number, createProblemDto: CreateProblemDto[]) {
-  //   return this.dataSource.transaction(async transactionalEntityManager => {
-  //     const exam = await transactionalEntityManager.findOne(Exam, {
-  //       where: { id: examId },
-  //       relations: ['problems']
-  //     });
-
-  //     if (!exam) {
-  //       throw new NotFoundException(`Exam with ID ${examId} not found`);
-  //     }
-
-  //     const existingProblemCount = exam.problems.length;
-  //     const newProblemCount = createProblemDto.length;
-  //     const totalProblemCount = existingProblemCount + newProblemCount;
-
-  //     if (totalProblemCount > 20) {
-  //       throw new BadRequestException(`Total number of problems (${totalProblemCount}) exceeds the maximum limit of 20`);
-  //     }
-
-  //     const problems = createProblemDto.map(dto =>
-  //       transactionalEntityManager.create(Problem, {
-  //         ...dto,
-  //         exam,
-  //       })
-  //     );
-
-  //     try {
-  //       const savedProblems = await transactionalEntityManager.save(problems);
-  //       return savedProblems;
-  //     } catch (error) {
-  //       throw new InternalServerErrorException('Failed to create problems');
-  //     }
-  //   });
-  // }
 
   async createMultiProblem(examId: number, createProblemDto: CreateProblemDto[]) {
     return this.dataSource.transaction(async transactionalEntityManager => {
@@ -93,8 +67,17 @@ export class ProblemBankService {
         throw new BadRequestException(`Total number of problems (${totalProblemCount}) exceeds the maximum limit of 20`);
       }
 
-      const problems = await Promise.all(createProblemDto.map(async dto => {
+      // Find the maximum order number from existing problems
+      const maxOrder = exam.problems.length > 0
+        ? Math.max(...exam.problems.map(p => p.order))
+        : 0;
+
+      const problems = await Promise.all(createProblemDto.map(async (dto, index) => {
+        // If order is not provided, use maxOrder + index + 1
+        const order = dto.order || maxOrder + index + 1;
+
         const problem = transactionalEntityManager.create(Problem, {
+          order: order,
           question: dto.question,
           image: dto.image,
           correctOptionId: dto.correctOptionId,
@@ -275,7 +258,6 @@ export class ProblemBankService {
     const newExam = this.examRepository.create({
       ...createExamDto,
       examiner: { id: createExamDto.examinerId },
-      examinee: createExamDto.examineeId ? { id: createExamDto.examineeId } : null
     });
 
     await this.examRepository.save(newExam);
@@ -295,13 +277,6 @@ export class ProblemBankService {
         throw new NotFoundException(`Examiner with ID ${updateExamDto.examinerId} not found`);
       }
       exam.examiner = examiner;
-    }
-    if (updateExamDto.examineeId) {
-      const examinee = await this.usersRepository.findOne({ where: { id: updateExamDto.examineeId } });
-      if (!examinee) {
-        throw new NotFoundException(`Examinee with ID ${updateExamDto.examineeId} not found`);
-      }
-      exam.examinee = examinee;
     }
 
     // 나머지 필드 업데이트

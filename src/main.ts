@@ -19,13 +19,18 @@ async function bootstrap() {
 
   // Swagger 설정
   const config = new DocumentBuilder()
-    .setTitle('Example app')
-    .setDescription('The example API description')
+    .setTitle('Sweet Dream Edu Api')
+    .setDescription('Sweet Dream Edu Api API description')
     .setVersion('1.0')
-    .addTag('example')
+    // .addTag('example')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      docExpansion: 'none', // 모든 엔드포인트가 처음 로드될 때 접힌 상태로 설정
+    },
+  });
 
   await app.listen(8080);
 }

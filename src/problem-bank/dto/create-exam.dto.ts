@@ -1,21 +1,38 @@
-// src/exam/dto/create-exam.dto.ts
-import { IsString, IsInt, IsArray, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsInt, IsArray, IsOptional, IsDateString, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateExamDto {
+    @ApiProperty({
+        description: '시험 이름',
+        example: '2023년 2학기 기말고사'
+    })
     @IsString()
     name: string;
 
+    @ApiProperty({
+        description: '시험 출제자 ID',
+        example: 1
+    })
     @IsInt()
     examinerId: number;
 
-    @IsInt()
-    @IsOptional()
-    examineeId?: number;
-
+    @ApiPropertyOptional({
+        description: '문제 ID 목록 (옵션, 정확히 5개)',
+        example: ["사과", "바나나", "포도", "수박", "토마토"],
+        type: [Number],
+        minItems: 1,
+        maxItems: 5
+    })
     @IsArray()
+    @ArrayMinSize(5)
+    @ArrayMaxSize(5)
     @IsOptional()
     problemIds?: number[];
 
+    @ApiPropertyOptional({
+        description: '시험 생성 날짜 (옵션)',
+        example: '2023-08-05T14:30:00Z'
+    })
     @IsDateString()
     @IsOptional()
     createdAt?: Date;

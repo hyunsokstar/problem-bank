@@ -8,7 +8,16 @@ export class UsersService {
   constructor(
     @InjectRepository(UsersModel)
     private readonly usersRepository: Repository<UsersModel>,
-  ) {}
+  ) { }
+
+  // @Delete('admin/delete-all-users')
+  // async deleteAllUsers() {
+  //   return await this.usersService.deleteAllUsers();
+  // } 에 대한 서비스
+
+  async deleteAllUsers(): Promise<void> {
+    await this.usersRepository.delete({});
+  }
 
   async findUsersForTestDataGrid(
     page: number = 0,

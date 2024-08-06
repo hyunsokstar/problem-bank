@@ -1,4 +1,3 @@
-// problem.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { Exam } from './exam.entity';
 import { AnswerOption } from './answer-option.entity';
@@ -7,6 +6,9 @@ import { AnswerOption } from './answer-option.entity';
 export class Problem {
     @PrimaryGeneratedColumn()
     id: number;
+
+    @Column('int', { nullable: true })
+    order: number;
 
     @Column('text')
     question: string;

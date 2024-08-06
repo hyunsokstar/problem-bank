@@ -62,7 +62,9 @@ export class AuthService {
       }
     });
 
-    // console.log("user by eamil : ", user);
+    console.log("email : ", email);
+    console.log("password : ", password);
+
 
     if (user && await bcrypt.compare(password, user.password)) {
       const { password, ...result } = user;
