@@ -19,7 +19,7 @@ export class UsersController {
   @Get('test-data-grid')
   async getUsersForTestDataGrid(
     @Query('page') page: number = 0,
-    @Query('size') size: number = 3,
+    @Query('size') size: number = 20,
   ) {
     return await this.usersService.findUsersForTestDataGrid(page, size);
   }
