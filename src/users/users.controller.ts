@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Query } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -33,4 +33,14 @@ export class UsersController {
   findTeachers() {
     return this.usersService.findTeachers();
   }
+
+  // 유저 데이터 대량 입력
+  @Post('admin/insert-many-users')
+  @ApiOperation({ summary: '유저 데이터 대량 입력', description: '데이터베이스에 유저 데이터를 대량으로 입력합니다.' })
+  @ApiResponse({ status: 200, description: '유저 데이터가 성공적으로 입력되었습니다.' })
+  @ApiResponse({ status: 500, description: '서버 에러가 발생했습니다.' })
+  async insertManyUsers() {
+    return await this.usersService.insertManyUsers();
+  }
+
 }

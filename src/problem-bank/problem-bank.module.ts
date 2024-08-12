@@ -8,12 +8,14 @@ import { Problem } from './entities/problem.entity';
 import { Answer } from './entities/answer.entity';
 import { Result } from './entities/result.entity';
 import { AnswerOption } from './entities/answer-option.entity';
+import { ExamFolder } from './entities/exam-folder.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       UsersModel,
       Exam,
+      ExamFolder,
       Problem,
       AnswerOption,
       Answer,

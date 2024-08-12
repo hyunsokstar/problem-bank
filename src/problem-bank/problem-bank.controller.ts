@@ -1,15 +1,53 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, ParseIntPipe, Query } from '@nestjs/common';
 import { ProblemBankService } from './problem-bank.service';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { CreateProblemDto } from './dto/create-problem-dto';
 import { CreateAnswerOptionDto } from './dto/create-answer-option.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateExamFolderDto } from './dto/create-exam-folder.dto';
+import { CreateMultipleExamFoldersDto } from './dto/create-multiple-exam-folders.dto';
 
 @Controller('problem-bank')
 @ApiTags('exam')
+@ApiTags('exam', 'exam-POST')
 export class ProblemBankController {
   constructor(private readonly problemBankService: ProblemBankService) { }
+
+  @Get('exam-folders')
+  @ApiTags('exam', 'exam-GET')
+  @ApiOperation({ summary: 'Get list of exam folders' })
+  @ApiResponse({ status: 200, description: 'Exam folder list retrieved successfully' })
+  @ApiQuery({ name: 'depth', required: false, type: Number, description: 'Depth of the folder tree to retrieve' })
+  async getExamFolderTree(@Query('depth', new ParseIntPipe({ optional: true })) depth?: number) {
+    return this.problemBankService.getExamFolderTree(depth);
+  }
+
+  // 특정 폴더에 대해 exam 추가
+  @Post('exam-folders/:folderId/exam')
+  @ApiTags('exam', 'exam-POST')
+  @ApiOperation({ summary: '특정 폴더에 대해 exam 추가' })
+  @ApiResponse({ status: 201, description: 'The exam has been successfully created' })
+  @HttpCode(HttpStatus.CREATED)
+  createExamForFolder(@Param('folderId', ParseIntPipe) folderId: number, @Body() createExamDto: CreateExamDto) {
+    return this.problemBankService.createExamForFolder(folderId, createExamDto);
+  }
+
+  @Post('exam-folders/bulk')
+  @ApiTags('exam', 'exam-POST')
+  @ApiOperation({ summary: 'Create multiple new exam folders' })
+  @ApiResponse({ status: 201, description: 'The exam folders have been successfully created' })
+  async createMultipleExamFolders(@Body() createMultipleExamFoldersDto: CreateMultipleExamFoldersDto) {
+    return this.problemBankService.createMultipleExamFolders(createMultipleExamFoldersDto.folders);
+  }
+
+  @Post('exam-folders')
+  @ApiTags('exam', 'exam-POST')
+  @ApiOperation({ summary: 'Create a new exam folder' })
+  @ApiResponse({ status: 201, description: 'The exam folder has been successfully created' })
+  async createExamFolder(@Body() createExamFolderDto: CreateExamFolderDto) {
+    return this.problemBankService.createExamFolder(createExamFolderDto);
+  }
 
   @Get('exam')
   @ApiTags('exam', 'exam-GET')
@@ -165,6 +203,7 @@ export class ProblemBankController {
       }
     }
   })
+  @ApiTags('exam', 'exam-POST')
   @ApiResponse({ status: 201, description: '문제 대량 추가 성공' })
   @HttpCode(HttpStatus.CREATED)
   createMultiProblem(

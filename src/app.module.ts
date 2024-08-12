@@ -13,6 +13,7 @@ import { Problem } from './problem-bank/entities/problem.entity';
 import { Answer } from './problem-bank/entities/answer.entity';
 import { Result } from './problem-bank/entities/result.entity';
 import { AnswerOption } from './problem-bank/entities/answer-option.entity';
+import { ExamFolder } from './problem-bank/entities/exam-folder.entity';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AnswerOption } from './problem-bank/entities/answer-option.entity';
       database: "ddankumi_db",
       entities: [
         UsersModel,
+        ExamFolder,
         Exam,
         Problem,
         AnswerOption,

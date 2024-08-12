@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel } from 'src/users/entities/user.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Repository, TreeRepository } from 'typeorm';
 import { Exam } from './entities/exam.entity';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
@@ -9,6 +9,8 @@ import { Problem } from './entities/problem.entity';
 import { CreateProblemDto } from './dto/create-problem-dto';
 import { CreateAnswerOptionDto } from './dto/create-answer-option.dto';
 import { AnswerOption } from './entities/answer-option.entity';
+import { ExamFolder } from './entities/exam-folder.entity';
+import { CreateExamFolderDto } from './dto/create-exam-folder.dto';
 
 @Injectable()
 export class ProblemBankService {
@@ -16,6 +18,9 @@ export class ProblemBankService {
   constructor(
     @InjectRepository(UsersModel)
     private readonly usersRepository: Repository<UsersModel>,
+
+    @InjectRepository(ExamFolder)
+    private examFolderRepository: TreeRepository<ExamFolder>,
 
     @InjectRepository(Exam)
     private readonly examRepository: Repository<Exam>,
@@ -26,9 +31,112 @@ export class ProblemBankService {
     @InjectRepository(AnswerOption)
     private readonly answerOptionRepository: Repository<AnswerOption>,
 
+    // private readonly logger = new Logger(ProblemBankService.name),
+
     private dataSource: DataSource
   ) { }
 
+  // 특정 폴더에 대해 exam 추가
+  async createExamForFolder(folderId: number, createExamDto: CreateExamDto) {
+    const folder = await this.examFolderRepository.findOne({ where: { id: folderId } });
+    if (!folder) {
+      throw new NotFoundException(`Folder with ID ${folderId} not found`);
+    }
+
+    const examiner = await this.usersRepository.findOne({ where: { id: createExamDto.examinerId } });
+    if (!examiner) {
+      throw new NotFoundException(`Examiner with ID ${createExamDto.examinerId} not found`);
+    }
+
+    const exam = this.examRepository.create({
+      ...createExamDto,
+      examiner,
+      folder,
+    });
+
+    return this.examRepository.save(exam);
+  }
+
+
+  async createMultipleExamFolders(createExamFolderDtos: CreateExamFolderDto[]): Promise<ExamFolder[]> {
+    const createdFolders: ExamFolder[] = [];
+
+    for (const dto of createExamFolderDtos) {
+      const { name, type } = dto;
+      let parent: ExamFolder | null = null;
+
+      // parentId가 제공된 경우에만 부모 폴더를 찾습니다.
+      if (dto.parentId !== undefined) {
+        parent = await this.examFolderRepository.findOne({ where: { id: dto.parentId } });
+        if (!parent) {
+          throw new NotFoundException(`Parent folder with ID ${dto.parentId} not found`);
+        }
+      }
+
+      const newFolder = this.examFolderRepository.create({
+        name,
+        type,
+        parent,
+      });
+
+      const savedFolder = await this.examFolderRepository.save(newFolder);
+      createdFolders.push(savedFolder);
+    }
+
+    return createdFolders;
+  }
+
+  async getExamFolderTree(depth: number = 3): Promise<ExamFolder[]> {
+    try {
+      const folders = await this.examFolderRepository.findTrees({
+        relations: ['exams', 'exams.examiner'],
+        depth: depth
+      });
+      return folders;
+    } catch (error) {
+      console.log("error: ", error);
+      throw new InternalServerErrorException('Failed to fetch exam folder tree');
+    }
+  }
+
+  private buildTree(folders: ExamFolder[]): ExamFolder[] {
+    const folderMap = new Map<number, ExamFolder>();
+    folders.forEach(folder => folderMap.set(folder.id, { ...folder, children: [] }));
+
+    const rootFolders: ExamFolder[] = [];
+    folders.forEach(folder => {
+      if (folder.parent) {
+        const parent = folderMap.get(folder.parent.id);
+        if (parent) {
+          parent.children.push(folderMap.get(folder.id)!);
+        }
+      } else {
+        rootFolders.push(folderMap.get(folder.id)!);
+      }
+    });
+
+    return rootFolders;
+  }
+
+  async createExamFolder(createExamFolderDto: CreateExamFolderDto): Promise<ExamFolder> {
+    const { name, type, parentId } = createExamFolderDto;
+    let parent: ExamFolder | null = null;
+
+    if (parentId) {
+      parent = await this.examFolderRepository.findOne({ where: { id: parentId } });
+      if (!parent) {
+        throw new NotFoundException(`Parent folder with ID ${parentId} not found`);
+      }
+    }
+
+    const newFolder = this.examFolderRepository.create({
+      name,
+      type,
+      parent,
+    });
+
+    return this.examFolderRepository.save(newFolder);
+  }
 
   async removeProblemsForExam(id: number) {
     const exam = await this.examRepository.findOne({ where: { id } });
@@ -282,20 +390,6 @@ export class ProblemBankService {
     // 나머지 필드 업데이트
     Object.assign(exam, updateExamDto);
 
-    // problemIds 처리
-    if (updateExamDto.problemIds && updateExamDto.problemIds.length > 0) {
-      const problems = await this.problemRepository.findBy({
-        id: In(updateExamDto.problemIds)
-      });
-
-      if (problems.length !== updateExamDto.problemIds.length) {
-        const foundIds = problems.map(p => p.id);
-        const missingIds = updateExamDto.problemIds.filter(id => !foundIds.includes(id));
-        throw new BadRequestException(`Some of the provided problem IDs are invalid: ${missingIds.join(', ')}`);
-      }
-
-      exam.problems = problems;
-    }
 
     try {
       return await this.examRepository.save(exam);

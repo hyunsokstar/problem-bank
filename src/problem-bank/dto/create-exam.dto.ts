@@ -17,19 +17,6 @@ export class CreateExamDto {
     examinerId: number;
 
     @ApiPropertyOptional({
-        description: '문제 ID 목록 (옵션, 정확히 5개)',
-        example: ["사과", "바나나", "포도", "수박", "토마토"],
-        type: [Number],
-        minItems: 1,
-        maxItems: 5
-    })
-    @IsArray()
-    @ArrayMinSize(5)
-    @ArrayMaxSize(5)
-    @IsOptional()
-    problemIds?: number[];
-
-    @ApiPropertyOptional({
         description: '시험 생성 날짜 (옵션)',
         example: '2023-08-05T14:30:00Z'
     })
