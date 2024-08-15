@@ -1,20 +1,128 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel, UserType } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { TeachersInfo } from './entities/teachers-info.entity';
+import { CreateTeachersInfoDto } from 'src/auth/dto/create-teacher-info.dto';
+import { generateRandomTeacherData } from 'src/utils/teacher-data-generator';
+import { TeachersInfoPaginationDto } from 'src/auth/dto/teachers-info-pagination.dto';
+import { TeacherSubject } from './entities/teacher-subject.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UsersModel)
     private readonly usersRepository: Repository<UsersModel>,
+    @InjectRepository(TeachersInfo)
+    private readonly teachersInfoRepository: Repository<TeachersInfo>,
+
+    @InjectRepository(TeacherSubject)
+    private readonly teacherSubjectRepo: Repository<TeacherSubject>,
   ) { }
 
+  async getTeachersInfoList(
+    page: number = 0,
+    perPage: number = 20,
+    searchTerm: string = '',
+    searchType: string = 'teacherName'
+  ): Promise<TeachersInfoPaginationDto> {
+    const queryBuilder = this.teachersInfoRepository.createQueryBuilder('teacherInfo');
 
-  async deleteAllUsers(): Promise<void> {
-    await this.usersRepository.delete({});
+    if (searchTerm && searchType) {
+      switch (searchType) {
+        case 'teacherName':
+          queryBuilder.where('teacherInfo.teacherName LIKE :searchTerm', { searchTerm: `%${searchTerm}%` });
+          break;
+        case 'teacherSubject':
+          queryBuilder
+            .leftJoinAndSelect('teacherInfo.subjects', 'subject')
+            .where('subject.subject LIKE :searchTerm', { searchTerm: `%${searchTerm}%` });
+          break;
+        case 'teacehrGrade':  // Note: this is the spelling used in the question
+          queryBuilder.where('teacherInfo.grade = :grade', { grade: parseInt(searchTerm) });
+          break;
+        default:
+          // If no valid search type is provided, don't apply any filter
+          break;
+      }
+    }
+
+    const [teachersInfoList, totalCount] = await queryBuilder
+      .skip(page * perPage)
+      .take(perPage)
+      .getManyAndCount();
+
+    const totalPages = Math.ceil(totalCount / perPage);
+    const totalElements = totalCount;
+
+    return {
+      teachersInfoList,
+      totalPages,
+      totalElements,
+      perPage,
+      first: page === 0,
+      last: page === totalPages - 1,
+      empty: teachersInfoList.length === 0
+    };
   }
 
+  // createTeachersInfo 함수 추가
+  async createTeachersInfo(createTeachersInfoDto: CreateTeachersInfoDto): Promise<TeachersInfo> {
+    const existingTeacher = await this.teachersInfoRepository.findOne({
+      where: [
+        { teacherName: createTeachersInfoDto.teacherName },
+        { registrationNumber: createTeachersInfoDto.registrationNumber },
+        { mainContactNumber: createTeachersInfoDto.mainContactNumber },
+      ],
+    });
+
+    if (existingTeacher) {
+      throw new ConflictException('Teacher with this name, registration number, or contact number already exists');
+    }
+
+    const newTeachersInfo = this.teachersInfoRepository.create(createTeachersInfoDto);
+    return await this.teachersInfoRepository.save(newTeachersInfo);
+  }
+
+  async generateAndCreateRandomTeachers(count: number = 10): Promise<TeachersInfo[]> {
+    const createdTeachers: TeachersInfo[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const randomTeacherData = generateRandomTeacherData();
+      try {
+        const newTeacher = await this.createTeachersInfo(randomTeacherData);
+        createdTeachers.push(newTeacher);
+      } catch (error) {
+        if (error instanceof ConflictException) {
+          console.warn(`Skipping duplicate teacher: ${randomTeacherData.teacherName}`);
+          i--; // Retry with a new random teacher
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return createdTeachers;
+  }
+
+  // async createMultipleTeachersInfo(createTeachersInfoDtoList: CreateTeachersInfoDto[]): Promise<TeachersInfo[]> {
+  //   const newTeachersInfoList: TeachersInfo[] = [];
+
+  //   for (const dto of createTeachersInfoDtoList) {
+  //     try {
+  //       const newTeacherInfo = await this.createTeachersInfo(dto);
+  //       newTeachersInfoList.push(newTeacherInfo);
+  //     } catch (error) {
+  //       if (error instanceof ConflictException) {
+  //         console.warn(`Skipping duplicate teacher: ${dto.teacherName}`);
+  //       } else {
+  //         throw error;
+  //       }
+  //     }
+  //   }
+
+  //   return newTeachersInfoList;
+  // }
 
   async findUsersForTestDataGrid(
     page: number = 0,
@@ -39,6 +147,9 @@ export class UsersService {
     last: boolean;
     empty: boolean;
   }> {
+    // 2초 지연
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const [users, total] = await this.usersRepository.findAndCount({
       select: ['id', 'email', 'name', 'age', 'gender', 'hobby'],
       skip: page * size,
@@ -67,6 +178,10 @@ export class UsersService {
       last: page === totalPages - 1,
       empty: users.length === 0,
     };
+  }
+
+  async deleteAllUsers(): Promise<void> {
+    await this.usersRepository.delete({});
   }
 
   async findAll(): Promise<UsersModel[]> {

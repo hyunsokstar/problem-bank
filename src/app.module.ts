@@ -14,6 +14,8 @@ import { Answer } from './problem-bank/entities/answer.entity';
 import { Result } from './problem-bank/entities/result.entity';
 import { AnswerOption } from './problem-bank/entities/answer-option.entity';
 import { ExamFolder } from './problem-bank/entities/exam-folder.entity';
+import { TeachersInfo } from './users/entities/teachers-info.entity';
+import { TeacherSubject } from './users/entities/teacher-subject.entity';
 
 @Module({
   imports: [
@@ -31,7 +33,9 @@ import { ExamFolder } from './problem-bank/entities/exam-folder.entity';
         Problem,
         AnswerOption,
         Answer,
-        Result
+        Result,
+        TeachersInfo,
+        TeacherSubject
       ],
       synchronize: true,
     }),
