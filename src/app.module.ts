@@ -15,7 +15,8 @@ import { Result } from './problem-bank/entities/result.entity';
 import { AnswerOption } from './problem-bank/entities/answer-option.entity';
 import { ExamFolder } from './problem-bank/entities/exam-folder.entity';
 import { TeachersInfo } from './users/entities/teachers-info.entity';
-import { TeacherSubject } from './users/entities/teacher-subject.entity';
+import { CurriculumModule } from './curriculum/curriculum.module';
+import { Subject } from './curriculum/entities/subject.entity';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { TeacherSubject } from './users/entities/teacher-subject.entity';
         Answer,
         Result,
         TeachersInfo,
-        TeacherSubject
+        Subject
       ],
       synchronize: true,
     }),
@@ -45,7 +46,8 @@ import { TeacherSubject } from './users/entities/teacher-subject.entity';
     }),
     UsersModule,
     AuthModule,
-    ProblemBankModule],
+    ProblemBankModule,
+    CurriculumModule],
   controllers: [AppController],
   providers: [AppService],
 })

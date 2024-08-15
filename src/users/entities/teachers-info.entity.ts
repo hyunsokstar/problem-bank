@@ -1,5 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { TeacherSubject } from './teacher-subject.entity';
+import { Subject } from 'src/curriculum/entities/subject.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity('teachers_info')
 export class TeachersInfo {
@@ -45,9 +45,20 @@ export class TeachersInfo {
     @Column({ type: 'varchar', length: 50 })
     managerCode: string;
 
-    @OneToMany(() => TeacherSubject, subject => subject.teacher)
-    subjects: TeacherSubject[];
-
     @Column({ type: 'int', nullable: true })
     grade: number;
+
+    @ManyToMany(() => Subject)
+    @JoinTable({
+        name: 'teacher_subjects', // 중간 테이블의 이름
+        joinColumn: {
+            name: 'teacherId',
+            referencedColumnName: 'id',
+        },
+        inverseJoinColumn: {
+            name: 'subjectId',
+            referencedColumnName: 'id',
+        },
+    })
+    subjects: Subject[];
 }

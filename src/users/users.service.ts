@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel, UserType } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -6,7 +6,7 @@ import { TeachersInfo } from './entities/teachers-info.entity';
 import { CreateTeachersInfoDto } from 'src/auth/dto/create-teacher-info.dto';
 import { generateRandomTeacherData } from 'src/utils/teacher-data-generator';
 import { TeachersInfoPaginationDto } from 'src/auth/dto/teachers-info-pagination.dto';
-import { TeacherSubject } from './entities/teacher-subject.entity';
+import { CreateSubjectDto } from './dto/create-subject-dto';
 
 @Injectable()
 export class UsersService {
@@ -16,8 +16,7 @@ export class UsersService {
     @InjectRepository(TeachersInfo)
     private readonly teachersInfoRepository: Repository<TeachersInfo>,
 
-    @InjectRepository(TeacherSubject)
-    private readonly teacherSubjectRepo: Repository<TeacherSubject>,
+
   ) { }
 
   async getTeachersInfoList(
