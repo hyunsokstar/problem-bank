@@ -12,13 +12,13 @@ export class CurriculumController {
   @ApiOperation({ summary: '과목 리스트 조회' })
   @ApiResponse({ status: 200, description: '과목 리스트가 성공적으로 조회되었습니다.' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호 (기본값: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 항목 수 (기본값: 10)' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, description: '페이지당 항목 수 (기본값: 10)' })
   @ApiTags('curriculum-GET')
   async findAllSubjects(
     @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10
+    @Query('perPage') perPage: number = 10
   ) {
-    return this.curriculumService.findAllSubjects(page, limit);
+    return this.curriculumService.findAllSubjects(page, perPage);
   }
 
   @Delete('subjects/:id')

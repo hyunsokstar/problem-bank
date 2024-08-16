@@ -12,14 +12,32 @@ export class CurriculumService {
         private readonly subjectRepository: Repository<Subject>,
     ) { }
 
-    async findAllSubjects(page: number = 1, limit: number = 10): Promise<{ subjects: Subject[], total: number }> {
-        const [subjects, total] = await this.subjectRepository.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
+    async findAllSubjects(page: number = 1, perPage: number = 10): Promise<{
+        subjects: Subject[],
+        totalPages: number,
+        totalElements: number,
+        perPage: number,
+        first: boolean,
+        last: boolean,
+        empty: boolean
+    }> {
+        const [subjects, totalCount] = await this.subjectRepository.findAndCount({
+            skip: (page - 1) * perPage,
+            take: perPage,
             order: { id: 'ASC' }
         });
 
-        return { subjects, total };
+        const totalPages = Math.ceil(totalCount / perPage);
+
+        return {
+            subjects,
+            totalPages,
+            totalElements: totalCount,
+            perPage: perPage,
+            first: page === 1,
+            last: page === totalPages,
+            empty: subjects.length === 0
+        };
     }
 
     async deleteSubject(id: number): Promise<void> {
