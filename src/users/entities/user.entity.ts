@@ -1,21 +1,20 @@
-// src/users/entities/user.entity.ts
 import {
   Column,
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
-export enum UserType {
-  STUDENT = 'student',
+export enum UserRole {
+  HOST_MANAGER = 'host_manager',
+  HOST_OPERATOR = 'host_operator',
   TEACHER = 'teacher',
-  ADMIN = 'admin',
-}
-
-export enum GenderType {
-  MAN = 'man',
-  WOMAN = 'woman',
+  TEACHER_STAFF = 'teacher_staff',
+  PARENT = 'parent',
+  CHILD = 'child',
 }
 
 @Entity()
@@ -24,50 +23,42 @@ export class UsersModel {
   id: number;
 
   @Column({ nullable: false, unique: true })
-  email: string;
+  userId: string; // 이메일 형식의 사용자 ID
 
-  @Column({ nullable: false, default: '1122' })
+  @Column({ nullable: false })
   password: string;
 
+  @Column({ nullable: false })
+  firstName: string;
+
+  @Column({ nullable: false })
+  lastName: string;
+
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date;
+
+  @Column({ type: 'int', nullable: true })
+  grade: number; // 1-12 학년
+
   @Column({ nullable: true })
-  name: string;
+  phoneNumber: string;
 
-  @Column({ type: 'enum', enum: UserType, nullable: true })
-  role: UserType;
-
-  @CreateDateColumn({ nullable: true })
-  join_date: Date;
-
-  @Column({ type: 'boolean', default: true })
-  is_visible: boolean;
+  @Column({ type: 'enum', enum: UserRole, nullable: true })
+  userRole: UserRole;
 
   @Column({ nullable: true })
-  teacher_code: string;
+  teacherCode: string; // 선생님 또는 TEACHER_STAFF 역할일 경우 필요
 
-  @Column({ type: 'timestamp', nullable: true })
-  last_login_date: Date;
+  @ManyToOne(() => UsersModel, { nullable: true })
+  @JoinColumn({ name: 'parentId' })
+  parent: UsersModel;
 
-  @Column({ type: 'int', nullable: true })
-  current_enrollments: number;
+  @Column({ nullable: true })
+  parentId: number;
 
-  @Column({ type: 'int', nullable: true })
-  total_payments: number;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  @Column({ type: 'text', nullable: true })
-  completed_courses: string;
-
-  @Column({ type: 'int', nullable: true })
-  average_score: number;
-
-  @UpdateDateColumn({ nullable: true })
-  updated_at: Date;
-
-  @Column({ type: 'int', nullable: true })
-  age: number;
-
-  @Column({ type: 'enum', enum: GenderType, nullable: true })
-  gender: GenderType;
-
-  @Column({ type: 'text', nullable: true })
-  hobby: string;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

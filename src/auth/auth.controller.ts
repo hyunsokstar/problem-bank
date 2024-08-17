@@ -1,83 +1,68 @@
-// src\auth\auth.controller.ts
-import { Controller, Post, Body, UseGuards, Get, Req } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignUpUserDto } from './dto/signup-user-dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { LoginUserDto } from './dto/login-user-dto';
-import { InsertManyUsersDto } from './dto/insert-many-users-dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateParentUserDto } from './dto/create-parent-user-dto';
+import { CreateManagerDto } from './dto/create-manager.dto';
+import { CreateChildrenOfParentDto } from './dto/create-children-of-parent.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  // 대량 회원 정보 추가 api 구현
-  @Post('admin/insert-many-users')
-  @ApiTags('Data Seeding')
-  @ApiOperation({
-    summary: '30명의 유저 데이터 대량 입력',
-    description: '데이터베이스에 30명의 유저 데이터를 대량으로 입력합니다. 모든 사용자의 비밀번호는 "test1122"로 설정됩니다.'
-  })
-  @ApiBody({ type: InsertManyUsersDto })
+  @Post('register/parent')
+  @ApiOperation({ summary: '일반 사용자 부모 회원가입' })
   @ApiResponse({
-    status: 201,
-    description: '유저 데이터가 성공적으로 입력되었습니다.',
+    status: 200,
+    description: '회원가입 성공',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: '30 명의 사용자 데이터가 성공적으로 입력되었습니다.' },
-        insertedCount: { type: 'number', example: 30 }
+        code: { type: 'string', example: 'OK' },
+        message: { type: 'string', example: '회원가입이 성공하였습니다.' },
+        data: { type: 'null', example: null }
       }
     }
   })
-  @ApiResponse({ status: 500, description: '서버 에러가 발생했습니다.' })
-  async insertManyUsers(@Body() insertManyUsersDto: InsertManyUsersDto) {
-    return await this.authService.insertManyUsers(insertManyUsersDto);
+  async registerParent(@Body() createParentUserDto: CreateParentUserDto) {
+    return this.authService.createParentUser(createParentUserDto);
   }
 
-
-  @Post('signup')
-  @ApiOperation({ summary: '회원 가입' })
-  @ApiResponse({ status: 201, description: '회원 가입에 성공했습니다.' })
-  @ApiBody({ type: SignUpUserDto })
-  @ApiResponse({ status: 201, description: '회원 가입에 성공했습니다.' })
-  async signup(@Body() signUpUserDto: SignUpUserDto): Promise<{ message: string }> {
-    await this.authService.signup(signUpUserDto);
-    return { message: '회원 가입에 성공했습니다.' };
+  @Post('register/manager')
+  @ApiOperation({ summary: '관리자 회원가입' })
+  @ApiResponse({
+    status: 200,
+    description: '회원가입 성공',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'OK' },
+        message: { type: 'string', example: '관리자 회원가입이 성공하였습니다.' },
+        data: { type: 'null', example: null }
+      }
+    }
+  })
+  async registerManager(@Body() createManagerDto: CreateManagerDto) {
+    return this.authService.createManagerUser(createManagerDto);
   }
 
-  @Post('login')
-  @ApiOperation({ summary: '로그인' })
-  @ApiResponse({ status: 200, description: '로그인 성공' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async login(@Body() loginUserDto: LoginUserDto) {
-    const user = await this.authService.validateUser(loginUserDto.email, loginUserDto.password);
-    return this.authService.login(user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('check-auth')
-  @ApiOperation({ summary: '로그인 상태 확인' })
-  @ApiResponse({ status: 200, description: '로그인 상태 확인 성공' })
-  @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
-  async checkAuth(@Req() req) {
-    return this.authService.checkAuth(req.user);
-  }
-
-  @Post('refresh')
-  @ApiOperation({ summary: '토큰 갱신' })
-  @ApiResponse({ status: 200, description: '토큰 갱신 성공' })
-  async refresh(@Body('refresh_token') refresh_token: string) {
-    return this.authService.refreshToken(refresh_token);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  @ApiOperation({ summary: '프로필 조회' })
-  @ApiResponse({ status: 200, description: '프로필 조회 성공' })
-  getProfile(@Req() req) {
-    return req.user;
+  @Post('parent/children')
+  @ApiOperation({ summary: '부모의 자녀 정보 등록' })
+  @ApiResponse({
+    status: 200,
+    description: '자녀 정보 등록 성공',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'OK' },
+        message: { type: 'string', example: '자녀 정보가 성공적으로 등록되었습니다.' },
+        data: { type: 'null', example: null }
+      }
+    }
+  })
+  async registerChildrenOfParent(@Body() createChildrenOfParentDto: CreateChildrenOfParentDto) {
+    return this.authService.createChildrenOfParent(createChildrenOfParentDto);
   }
 
 }
+
