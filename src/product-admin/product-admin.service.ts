@@ -9,7 +9,6 @@ export class ProductAdminService {
 
     private treeRepository: TreeRepository<ProductCategory>;
 
-
     constructor(
         @InjectRepository(ProductCategory)
         private readonly productCategoryRepository: Repository<ProductCategory>,
