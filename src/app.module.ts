@@ -17,6 +17,8 @@ import { ExamFolder } from './problem-bank/entities/exam-folder.entity';
 import { TeachersInfo } from './users/entities/teachers-info.entity';
 import { CurriculumModule } from './curriculum/curriculum.module';
 import { Subject } from './curriculum/entities/subject.entity';
+import { ProductAdminModule } from './product-admin/product-admin.module';
+import { ProductCategory } from './product-admin/entities/product.category.entity';
 
 @Module({
   imports: [
@@ -36,7 +38,8 @@ import { Subject } from './curriculum/entities/subject.entity';
         Answer,
         Result,
         TeachersInfo,
-        Subject
+        Subject,
+        ProductCategory
       ],
       synchronize: true,
     }),
@@ -47,7 +50,8 @@ import { Subject } from './curriculum/entities/subject.entity';
     UsersModule,
     AuthModule,
     ProblemBankModule,
-    CurriculumModule],
+    CurriculumModule,
+    ProductAdminModule],
   controllers: [AppController],
   providers: [AppService],
 })

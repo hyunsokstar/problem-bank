@@ -4,11 +4,21 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateParentUserDto } from './dto/create-parent-user-dto';
 import { CreateManagerDto } from './dto/create-manager.dto';
 import { CreateChildrenOfParentDto } from './dto/create-children-of-parent.dto';
+import { LoginResponseDto } from './dto/login-resoponse.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
+
+  @Post('/login')
+  @ApiOperation({ summary: '일반 사용자 로그인' })
+  @ApiResponse({ status: 200, description: '로그인 성공', type: LoginResponseDto })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
+    return this.authService.login(loginDto);
+  }
 
   @Post('register/parent')
   @ApiOperation({ summary: '일반 사용자 부모 회원가입' })
