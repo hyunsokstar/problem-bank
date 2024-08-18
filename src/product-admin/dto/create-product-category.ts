@@ -1,16 +1,20 @@
-// src\product-admin\dto\create-product-category.ts
-import { ApiProperty } from '@nestjs/swagger';
+// create-product-category.dto.ts
+import { IsString, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateCategoryDto {
-    @ApiProperty({ example: '정승재' })
+    @IsString()
     name: string;
 
-    @ApiProperty({ example: '/정승재' })
+    @IsString()
     folderPath: string;
 
-    @ApiProperty({ example: '#00FF00', required: false })
+    @IsString()
+    @IsOptional()
     folderColor?: string;
 
-    @ApiProperty({ type: () => [CreateCategoryDto], required: false })
+    @ValidateNested({ each: true })
+    @Type(() => CreateCategoryDto)
+    @IsOptional()
     children?: CreateCategoryDto[];
 }

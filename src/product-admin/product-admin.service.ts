@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductCategory } from './entities/product.category.entity';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-product-category';
 
 @Injectable()
@@ -36,26 +36,20 @@ export class ProductAdminService {
         }
     }
 
-    private async createCategoryRecursive(
-        categoryDto: CreateCategoryDto,
+    async createCategoryRecursive(
+        dto: CreateCategoryDto,
         parent: ProductCategory | null,
-        queryRunner: any
+        queryRunner: QueryRunner
     ): Promise<ProductCategory> {
-        if (!categoryDto.name) {
-            throw new BadRequestException('Category name is required');
-        }
+        const category = new ProductCategory();
+        category.name = dto.name;
+        category.folderPath = dto.folderPath;
+        category.parent = parent;
 
-        const category = this.productCategoryRepository.create({
-            name: categoryDto.name,
-            folderPath: categoryDto.folderPath,
-            folderColor: categoryDto.folderColor,
-            parent: parent
-        });
+        const savedCategory = await queryRunner.manager.save(category);
 
-        const savedCategory = await queryRunner.manager.save(ProductCategory, category);
-
-        if (categoryDto.children && categoryDto.children.length > 0) {
-            for (const childDto of categoryDto.children) {
+        if (dto.children && dto.children.length > 0) {
+            for (const childDto of dto.children) {
                 await this.createCategoryRecursive(childDto, savedCategory, queryRunner);
             }
         }
