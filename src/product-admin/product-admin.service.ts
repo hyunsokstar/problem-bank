@@ -1,16 +1,42 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductCategory } from './entities/product.category.entity';
-import { Repository, DataSource, QueryRunner } from 'typeorm';
+import { Repository, DataSource, QueryRunner, IsNull, TreeRepository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-product-category';
 
 @Injectable()
 export class ProductAdminService {
+
+    private treeRepository: TreeRepository<ProductCategory>;
+
+
     constructor(
         @InjectRepository(ProductCategory)
         private readonly productCategoryRepository: Repository<ProductCategory>,
         private dataSource: DataSource
-    ) { }
+    ) {
+        this.treeRepository = this.dataSource.getTreeRepository(ProductCategory);
+    }
+
+
+    async getCategoryTree(): Promise<any> {
+        try {
+            const trees = await this.treeRepository.findTrees();
+            return trees.map(tree => this.mapCategoryToTreeNode(tree));
+        } catch (err) {
+            throw new InternalServerErrorException('Failed to get category tree', err.message);
+        }
+    }
+
+    private mapCategoryToTreeNode(category: ProductCategory): any {
+        return {
+            id: category.id,
+            name: category.name,
+            folderPath: category.folderPath,
+            folderColor: category.folderColor,
+            children: category.children ? category.children.map(child => this.mapCategoryToTreeNode(child)) : []
+        };
+    }
 
     async createCategoryStructures(createCategoryDtos: CreateCategoryDto[]): Promise<ProductCategory[]> {
         const queryRunner = this.dataSource.createQueryRunner();
@@ -19,15 +45,14 @@ export class ProductAdminService {
 
         try {
             await this.deleteAllCategories();
-
-            const results: ProductCategory[] = [];
-            for (const dto of createCategoryDtos) {
-                const result = await this.createCategoryRecursive(dto, null, queryRunner);
-                results.push(result);
-            }
-
+            await this.createCategories(createCategoryDtos, null, queryRunner);
             await queryRunner.commitTransaction();
-            return results;
+
+            // 모든 깊이의 자식 카테고리를 포함하여 조회
+            return this.productCategoryRepository.find({
+                relations: ['children', 'children.children', 'children.children.children'],
+                where: { parent: IsNull() }
+            });
         } catch (err) {
             await queryRunner.rollbackTransaction();
             throw new InternalServerErrorException('Failed to create category structures', err.message);
@@ -36,25 +61,25 @@ export class ProductAdminService {
         }
     }
 
-    async createCategoryRecursive(
-        dto: CreateCategoryDto,
+    private async createCategories(
+        dtos: CreateCategoryDto[],
         parent: ProductCategory | null,
         queryRunner: QueryRunner
-    ): Promise<ProductCategory> {
-        const category = new ProductCategory();
-        category.name = dto.name;
-        category.folderPath = dto.folderPath;
-        category.parent = parent;
+    ): Promise<void> {
+        for (const dto of dtos) {
+            const category = queryRunner.manager.create(ProductCategory, {
+                name: dto.name,
+                folderPath: dto.folderPath,
+                folderColor: dto.folderColor,
+                parent: parent
+            });
 
-        const savedCategory = await queryRunner.manager.save(category);
+            const savedCategory = await queryRunner.manager.save(ProductCategory, category);
 
-        if (dto.children && dto.children.length > 0) {
-            for (const childDto of dto.children) {
-                await this.createCategoryRecursive(childDto, savedCategory, queryRunner);
+            if (dto.children && dto.children.length > 0) {
+                await this.createCategories(dto.children, savedCategory, queryRunner);
             }
         }
-
-        return savedCategory;
     }
 
     async deleteAllCategories(): Promise<void> {
@@ -74,32 +99,6 @@ export class ProductAdminService {
         } finally {
             await queryRunner.release();
         }
-    }
-
-    async getCategoryTree(): Promise<any> {
-        try {
-            const categories = await this.productCategoryRepository.find({
-                relations: ['parent', 'children']
-            });
-            return this.buildCategoryTree(categories);
-        } catch (err) {
-            throw new InternalServerErrorException('Failed to get category tree', err.message);
-        }
-    }
-
-    private buildCategoryTree(categories: ProductCategory[]): any {
-        const rootCategories = categories.filter(category => !category.parent);
-        return rootCategories.map(category => this.mapCategoryToTreeNode(category));
-    }
-
-    private mapCategoryToTreeNode(category: ProductCategory): any {
-        return {
-            id: category.id,
-            name: category.name,
-            folderPath: category.folderPath,
-            folderColor: category.folderColor,
-            children: category.children ? category.children.map(child => this.mapCategoryToTreeNode(child)) : []
-        };
     }
 
     async updateCategory(id: number, updateCategoryDto: Partial<CreateCategoryDto>): Promise<ProductCategory> {
