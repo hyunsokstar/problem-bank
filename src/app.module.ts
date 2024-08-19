@@ -19,6 +19,8 @@ import { CurriculumModule } from './curriculum/curriculum.module';
 import { Subject } from './curriculum/entities/subject.entity';
 import { ProductAdminModule } from './product-admin/product-admin.module';
 import { ProductCategory } from './product-admin/entities/product.category.entity';
+import { ItemAdminModule } from './item-admin/item-admin.module';
+import { ItemsModel } from './item-admin/entities/item-admin.entity';
 
 @Module({
   imports: [
@@ -39,7 +41,8 @@ import { ProductCategory } from './product-admin/entities/product.category.entit
         Result,
         TeachersInfo,
         Subject,
-        ProductCategory
+        ProductCategory,
+        ItemsModel
       ],
       synchronize: true,
     }),
@@ -51,7 +54,8 @@ import { ProductCategory } from './product-admin/entities/product.category.entit
     AuthModule,
     ProblemBankModule,
     CurriculumModule,
-    ProductAdminModule],
+    ProductAdminModule,
+    ItemAdminModule],
   controllers: [AppController],
   providers: [AppService],
 })
