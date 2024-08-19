@@ -13,9 +13,31 @@ export class ItemAdminService {
     private itemsRepository: Repository<ItemsModel>,
   ) { }
 
-  async findAll(): Promise<ItemAdminResponseDto[]> {
-    const items = await this.itemsRepository.find();
-    return this.buildTree(items);
+  async findAll(pageNum: number = 1, pageSize: number = 10): Promise<{
+    pageNum: number;
+    pageSize: number;
+    totalCount: number;
+    contents: ItemAdminResponseDto[];
+    first: boolean;
+    last: boolean;
+    empty: boolean;
+  }> {
+    const [items, totalCount] = await this.itemsRepository.findAndCount({
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+    });
+
+    const contents = this.buildTree(items);
+
+    return {
+      pageNum,
+      pageSize,
+      totalCount,
+      contents,
+      first: pageNum === 1,
+      last: pageNum * pageSize >= totalCount,
+      empty: totalCount === 0,
+    };
   }
 
   private buildTree(items: ItemsModel[]): ItemAdminResponseDto[] {

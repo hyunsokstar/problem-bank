@@ -1,24 +1,31 @@
-import { Controller, Get, Post, Body, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Query } from '@nestjs/common';
 import { ItemAdminService } from './item-admin.service';
 import { CreateItemAdminDto } from './dto/create-item-admin.dto';
 import { ItemsModel } from './entities/item-admin.entity';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ItemAdminResponseDto } from './dto/item-admin-response.dto';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { PaginatedItemAdminResponseDto } from './dto/item-admin-response.dto';
 
 @Controller('item-admin')
 export class ItemAdminController {
   constructor(private readonly itemAdminService: ItemAdminService) { }
 
   @Get()
-  @ApiOperation({ summary: 'Get all items in hierarchical structure' })
+  @ApiOperation({ summary: '계층 구조의 모든 항목을 페이지네이션과 함께 조회' })
   @ApiResponse({
     status: 200,
-    description: 'Return all items in a tree structure.',
-    type: [ItemAdminResponseDto]
+    description: '트리 구조의 모든 항목을 페이지네이션 정보와 함께 반환합니다.',
+    type: PaginatedItemAdminResponseDto
   })
+  @ApiQuery({ name: 'pageNum', required: false, type: Number, description: '조회할 페이지 번호 (기본값: 1)' })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number, description: '페이지당 항목 수 (기본값: 10)' })
   @ApiTags('item-admin/get')
-  async findAll(): Promise<ItemAdminResponseDto[]> {
-    return this.itemAdminService.findAll();
+  async findAll(
+    @Query('pageNum') pageNum: number = 1,
+    @Query('pageSize') pageSize: number = 10
+  ): Promise<PaginatedItemAdminResponseDto> {
+    // pageNum과 pageSize를 사용하여 페이지네이션된 결과를 조회합니다.
+    // 반환값은 페이지네이션 정보와 함께 트리 구조의 항목 목록을 포함합니다.
+    return this.itemAdminService.findAll(pageNum, pageSize);
   }
 
   @Delete('delete-all')

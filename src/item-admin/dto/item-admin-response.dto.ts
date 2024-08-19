@@ -1,3 +1,5 @@
+// item-admin-response.dto.ts
+
 export class ItemAdminResponseDto {
     id: number;
     name: string;
@@ -7,4 +9,14 @@ export class ItemAdminResponseDto {
     depth: number;
     parentId: number | null;
     children: ItemAdminResponseDto[];
+}
+
+export class PaginatedItemAdminResponseDto {
+    pageNum: number;
+    pageSize: number;
+    totalCount: number;
+    contents: ItemAdminResponseDto[];
+    first: boolean;
+    last: boolean;
+    empty: boolean;
 }
