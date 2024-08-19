@@ -3,6 +3,7 @@ import { ItemsModel } from './entities/item-admin.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateItemAdminDto } from './dto/create-item-admin.dto';
+import { ItemAdminResponseDto } from './dto/item-admin-response.dto';
 
 @Injectable()
 export class ItemAdminService {
@@ -11,6 +12,45 @@ export class ItemAdminService {
     @InjectRepository(ItemsModel)
     private itemsRepository: Repository<ItemsModel>,
   ) { }
+
+  async findAll(): Promise<ItemAdminResponseDto[]> {
+    const items = await this.itemsRepository.find();
+    return this.buildTree(items);
+  }
+
+  private buildTree(items: ItemsModel[]): ItemAdminResponseDto[] {
+    const itemMap = new Map<number, ItemAdminResponseDto>();
+
+    items.forEach(item => {
+      const dto: ItemAdminResponseDto = {
+        id: item.id,
+        name: item.name,
+        folderPath: item.folderPath,
+        folderColor: item.folderColor,
+        order: item.order,
+        depth: item.depth,
+        parentId: item.parentId,
+        children: []
+      };
+      itemMap.set(item.id, dto);
+    });
+
+    const tree: ItemAdminResponseDto[] = [];
+
+    items.forEach(item => {
+      const dto = itemMap.get(item.id);
+      if (item.parentId) {
+        const parent = itemMap.get(item.parentId);
+        if (parent) {
+          parent.children.push(dto);
+        }
+      } else {
+        tree.push(dto);
+      }
+    });
+
+    return tree;
+  }
 
   async deleteAll(): Promise<{ message: string }> {
     await this.itemsRepository.clear();
@@ -49,37 +89,6 @@ export class ItemAdminService {
     }
 
     return savedItem;
-  }
-
-
-  async findAll(): Promise<ItemsModel[]> {
-    const items = await this.itemsRepository.find(); // relations: ['parent'] 제거
-
-    return this.buildTree(items);
-  }
-
-  private buildTree(items: ItemsModel[]): ItemsModel[] {
-    const itemMap = new Map<number, ItemsModel>();
-
-    items.forEach(item => {
-      item.children = [];
-      itemMap.set(item.id, item);
-    });
-
-    const tree: ItemsModel[] = [];
-
-    items.forEach(item => {
-      if (item.parentId) {
-        const parent = itemMap.get(item.parentId);
-        if (parent) {
-          parent.children.push(item);
-        }
-      } else {
-        tree.push(item);
-      }
-    });
-
-    return tree;
   }
 
 }

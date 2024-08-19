@@ -3,10 +3,23 @@ import { ItemAdminService } from './item-admin.service';
 import { CreateItemAdminDto } from './dto/create-item-admin.dto';
 import { ItemsModel } from './entities/item-admin.entity';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ItemAdminResponseDto } from './dto/item-admin-response.dto';
 
 @Controller('item-admin')
 export class ItemAdminController {
   constructor(private readonly itemAdminService: ItemAdminService) { }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all items in hierarchical structure' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all items in a tree structure.',
+    type: [ItemAdminResponseDto]
+  })
+  @ApiTags('item-admin/get')
+  async findAll(): Promise<ItemAdminResponseDto[]> {
+    return this.itemAdminService.findAll();
+  }
 
   @Delete('delete-all')
   @ApiOperation({ summary: 'Delete all items' })
@@ -71,13 +84,5 @@ export class ItemAdminController {
   })
   async createBulk(@Body() createItemAdminDtos: CreateItemAdminDto[]): Promise<ItemsModel[]> {
     return this.itemAdminService.createBulk(createItemAdminDtos);
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Get all items in hierarchical structure' })
-  @ApiResponse({ status: 200, description: 'Return all items in a tree structure.' })
-  @ApiTags('item-admin/get')
-  async findAll(): Promise<ItemsModel[]> {
-    return this.itemAdminService.findAll();
   }
 }
