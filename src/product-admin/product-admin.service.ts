@@ -17,7 +17,6 @@ export class ProductAdminService {
         this.treeRepository = this.dataSource.getTreeRepository(ProductCategory);
     }
 
-
     async getCategoryTree(): Promise<any> {
         try {
             const trees = await this.treeRepository.findTrees();
