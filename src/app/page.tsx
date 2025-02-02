@@ -4,7 +4,8 @@ import Image from "next/image";
 export default function Home() {
   return (
       <div>
-        <Counter />
+        메인 페이지
+        {/* <Counter /> */}
       </div>
   );
 }

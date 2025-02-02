@@ -1,55 +1,38 @@
+// src/widgets/header/ui/Header.tsx
 "use client";
 
-// src\widgets\header\ui\Header.tsx
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { navItems } from '../model/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { headerMenus } from "../model/header-menus";
+import MenuItem from "./components/MenuItem";
 
 interface HeaderProps {
-    className?: string;
+  className?: string;
 }
 
-const Header = ({ className }: HeaderProps) => {
-    const pathname = usePathname();
+export default function Header({ className }: HeaderProps) {
+  const pathname = usePathname();
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
-    return (
-        <header className={cn(
-            "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-            className
-        )}>
-            <div className="container flex h-14 items-center justify-between">
-                {/* Logo */}
-                <Link href="/" className="flex items-center space-x-2">
-                    <span className="font-bold">Problem Bank</span>
-                </Link>
-
-                {/* Navigation */}
-                <nav className="flex items-center space-x-6">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                "text-sm font-medium transition-colors hover:text-primary",
-                                pathname === item.href
-                                    ? "text-primary"
-                                    : "text-muted-foreground"
-                            )}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
-                </nav>
-
-                {/* Right side actions */}
-                <div className="flex items-center space-x-4">
-                    {/* Add any right-side actions like auth buttons later */}
-                </div>
-            </div>
-        </header>
-    );
-};
-
-export default Header;
+  return (
+    <header className={cn("sticky top-0 z-40 w-full bg-white border-b", className)}>
+      {/* Menu bar */}
+      <div className="relative bg-white">
+        <nav className="container mx-auto flex items-center px-4">
+          {headerMenus.map((item) => (
+            <MenuItem
+              key={item.href}
+              item={item}
+              currentPath={pathname}
+              isOpen={activeMenu === item.href}
+              onMouseEnter={() => setActiveMenu(item.href)}
+              onMouseLeave={() => setActiveMenu(null)}
+            />
+          ))}
+        </nav>
+      </div>
+    </header>
+  );
+}
