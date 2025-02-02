@@ -14,11 +14,13 @@ const getDeepestSubPath = (menu: MenuItem | null): string | undefined => {
 };
 
 // 해당 경로의 메뉴 아이템 찾기
-const findMenuItem = (path: string): MenuItem | null => {
-    for (const menu of headerMenus) {
+const findMenuItem = (path: string, menus = headerMenus): MenuItem | null => {
+    for (const menu of menus) {
         if (menu.href === path) return menu;
-        const subMenu = menu.subMenus?.find(sub => sub.href === path);
-        if (subMenu) return subMenu;
+        if (menu.subMenus) {
+            const found = findMenuItem(path, menu.subMenus);
+            if (found) return found;
+        }
     }
     return null;
 };
